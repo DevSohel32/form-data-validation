@@ -21,17 +21,41 @@
         $email = validation($_POST['email']);
         $country = $_POST['country'] ?? '';
         $password = validation($_POST['password']);
-        $gender = $_POST['gender']?? '';
+        $gender = $_POST['gender'] ?? '';
         $imageName = $_FILES['image']['name'];
         $imageType = $_FILES['image']['type'];
-        $imageTmp=$_FILES['image']['tmp_name'];
-        $imagesize=$_FILES['image']['size'];
-      
-      if(empty($imageName)){
-        $errors['imageName'] = '⚠️ Please Upload your image.';
-      }else{
-        $data ['imageName'] = $imageName;
-      }
+        $imageTmp = $_FILES['image']['tmp_name'];
+        $imagesize = $_FILES['image']['size'];
+
+        if (empty($imageName)) {
+            $errors['imageName'] = '⚠️ Please Upload your image.';
+        } else {
+            $data['imageName'] = $imageName;
+        }
+        $imageExt = strtolower(pathinfo($imageName, PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+
+        if (!in_array($imageExt, $allowed)) {
+            $errors['imageName'] = '❌ Only JPG, JPEG, PNG, and GIF files are allowed.';
+        } elseif ($imagesize > 2 * 1024 * 1024) {
+            $errors['imageName'] = '❌ File size must be less than 2MB.';
+        } else {
+            $newfileName = uniqid("IMG_", true) . "." . $imageExt;
+            $uploadDir = 'uploads/Profile/';
+            $uploadPath = $uploadDir . $newfileName;
+
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            // Move file to uploads folder
+            if (move_uploaded_file($imageTmp, $uploadPath)) {
+                // ✅ Successfully uploaded
+                $data['profile'] = $uploadPath;
+            } else {
+                // ⚠️ Upload failed
+                $errors['profile'] = '⚠️ File upload failed. Please try again.';
+            }
+        }
         // First name validation
         if (empty($fname)) {
             $errors['fname'] = '⚠️ Please enter your first name.';
